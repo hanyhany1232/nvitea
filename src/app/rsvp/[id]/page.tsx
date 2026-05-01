@@ -11,7 +11,7 @@ import {
   CheckCircle,
   Users,
 } from "lucide-react";
-import { getOrderById, submitRsvp } from "@/lib/actions/orders";
+
 
 interface OrderData {
   id: string;
@@ -46,9 +46,14 @@ export default function RsvpPage({
 
   useEffect(() => {
     async function loadOrder() {
-      const result = await getOrderById(id);
-      if (result.order) {
-        setOrder(result.order as OrderData);
+      try {
+        const res = await fetch(`/api/rsvp/${id}`);
+        if (res.ok) {
+          const data = await res.json();
+          setOrder(data.order as OrderData);
+        }
+      } catch {
+        // Order not found
       }
       setLoading(false);
     }
@@ -60,15 +65,25 @@ export default function RsvpPage({
     setFormState("submitting");
     setError("");
 
-    const result = await submitRsvp(id, rsvpData);
+    try {
+      const res = await fetch(`/api/rsvp/${id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(rsvpData),
+      });
 
-    if (result.error) {
-      setError(result.error);
+      if (!res.ok) {
+        const data = await res.json();
+        setError(data.error || "Failed to submit RSVP");
+        setFormState("idle");
+        return;
+      }
+
+      setFormState("success");
+    } catch {
+      setError("Something went wrong. Please try again.");
       setFormState("idle");
-      return;
     }
-
-    setFormState("success");
   };
 
   if (loading) {

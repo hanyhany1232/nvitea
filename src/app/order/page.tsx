@@ -89,12 +89,7 @@ function OrderForm() {
       const res = await fetch("/api/create-checkout-session", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          orderId,
-          amount,
-          designName: selectedDesign?.name || formData.designPreference,
-          customerEmail: formData.email,
-        }),
+        body: JSON.stringify({ orderId }),
       });
 
       const data = await res.json();
