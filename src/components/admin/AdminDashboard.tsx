@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { motion } from "framer-motion";
+import Link from "next/link";
 import {
   Package,
   DollarSign,
@@ -14,6 +15,8 @@ import {
   ChevronUp,
   Link as LinkIcon,
   Copy,
+  Palette,
+  Share2,
 } from "lucide-react";
 import { updateOrderStatus } from "@/lib/actions/orders";
 import { signOut } from "@/lib/actions/auth";
@@ -111,14 +114,23 @@ export default function AdminDashboard({
             <h1 className="font-heading text-3xl font-bold text-text-light">
               Admin Dashboard
             </h1>
-            <form action={signOut}>
-              <button
-                type="submit"
-                className="px-4 py-2 text-sm text-text-muted hover:text-text-light transition-colors"
+            <div className="flex items-center gap-3">
+              <Link
+                href="/admin/designs"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-accent bg-accent/10 rounded-full hover:bg-accent/20 transition-colors"
               >
-                Sign Out
-              </button>
-            </form>
+                <Palette size={14} />
+                Designs
+              </Link>
+              <form action={signOut}>
+                <button
+                  type="submit"
+                  className="px-4 py-2 text-sm text-text-muted hover:text-text-light transition-colors"
+                >
+                  Sign Out
+                </button>
+              </form>
+            </div>
           </div>
 
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -315,6 +327,15 @@ export default function AdminDashboard({
                         </div>
 
                         <div className="flex flex-wrap gap-2">
+                          <a
+                            href={`/invitation/${order.id}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-accent/10 text-accent rounded-full hover:bg-accent/20 transition-colors"
+                          >
+                            <Eye size={14} />
+                            View Invitation
+                          </a>
                           <button
                             onClick={() => copyRsvpLink(order.id)}
                             className="flex items-center gap-1.5 px-4 py-2 text-sm bg-accent/10 text-accent rounded-full hover:bg-accent/20 transition-colors"
@@ -322,15 +343,22 @@ export default function AdminDashboard({
                             <Copy size={14} />
                             Copy RSVP Link
                           </button>
-                          <a
-                            href={`/rsvp/${order.id}`}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-accent/10 text-accent rounded-full hover:bg-accent/20 transition-colors"
+                          <button
+                            onClick={() => {
+                              const url = `${window.location.origin}/invitation/${order.id}`;
+                              const text = encodeURIComponent(
+                                `You're invited to ${order.customer_name}'s ${order.event_type}! Open your invitation:`
+                              );
+                              window.open(
+                                `https://wa.me/?text=${text}%20${encodeURIComponent(url)}`,
+                                "_blank"
+                              );
+                            }}
+                            className="flex items-center gap-1.5 px-4 py-2 text-sm bg-green-50 text-green-700 rounded-full hover:bg-green-100 transition-colors"
                           >
-                            <Eye size={14} />
-                            Preview RSVP Page
-                          </a>
+                            <Share2 size={14} />
+                            Share via WhatsApp
+                          </button>
                           <a
                             href={`https://wa.me/${order.customer_phone.replace(/\D/g, "")}`}
                             target="_blank"
@@ -338,7 +366,7 @@ export default function AdminDashboard({
                             className="flex items-center gap-1.5 px-4 py-2 text-sm bg-green-50 text-green-700 rounded-full hover:bg-green-100 transition-colors"
                           >
                             <LinkIcon size={14} />
-                            WhatsApp
+                            Contact Customer
                           </a>
                         </div>
 
