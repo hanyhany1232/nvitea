@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X, LogIn, User } from "lucide-react";
+import { Menu, X, LogIn, User, LayoutDashboard } from "lucide-react";
 import clsx from "clsx";
 import { createClient } from "@/lib/supabase/client";
 import type { User as SupabaseUser } from "@supabase/supabase-js";
@@ -64,13 +64,22 @@ export function Header() {
 
           <div className="hidden md:flex items-center gap-3">
             {user ? (
-              <Link
-                href="/admin"
-                className="flex items-center gap-2 px-4 py-2 text-sm text-primary/70 hover:text-accent transition-colors"
-              >
-                <User size={16} />
-                Dashboard
-              </Link>
+              <>
+                <Link
+                  href="/dashboard"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-primary/70 hover:text-accent transition-colors"
+                >
+                  <LayoutDashboard size={16} />
+                  My Orders
+                </Link>
+                <Link
+                  href="/profile"
+                  className="flex items-center gap-2 px-4 py-2 text-sm text-primary/70 hover:text-accent transition-colors"
+                >
+                  <User size={16} />
+                  Profile
+                </Link>
+              </>
             ) : (
               <Link
                 href="/auth/login"
@@ -116,13 +125,22 @@ export function Header() {
             </Link>
           ))}
           {user ? (
-            <Link
-              href="/admin"
-              onClick={() => setMobileOpen(false)}
-              className="block py-2 text-primary/70 hover:text-accent transition-colors"
-            >
-              Dashboard
-            </Link>
+            <>
+              <Link
+                href="/dashboard"
+                onClick={() => setMobileOpen(false)}
+                className="block py-2 text-primary/70 hover:text-accent transition-colors"
+              >
+                My Orders
+              </Link>
+              <Link
+                href="/profile"
+                onClick={() => setMobileOpen(false)}
+                className="block py-2 text-primary/70 hover:text-accent transition-colors"
+              >
+                Profile
+              </Link>
+            </>
           ) : (
             <Link
               href="/auth/login"
