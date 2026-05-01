@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { getDesignById } from "@/lib/data";
 
 export interface OrderFormData {
   name: string;
@@ -16,7 +17,6 @@ export interface OrderFormData {
   message: string;
   additionalNotes: string;
   designId?: string;
-  amount: number;
 }
 
 export async function createOrder(data: OrderFormData) {
@@ -26,11 +26,13 @@ export async function createOrder(data: OrderFormData) {
     data: { user },
   } = await supabase.auth.getUser();
 
+  const design = data.designId ? getDesignById(data.designId) : null;
+  const validatedAmount = design?.price || 99;
+
   const { data: order, error } = await supabase
     .from("orders")
     .insert({
       user_id: user?.id || null,
-      design_id: data.designId || null,
       customer_name: data.name,
       customer_email: data.email,
       customer_phone: data.phone,
@@ -40,10 +42,10 @@ export async function createOrder(data: OrderFormData) {
       venue: data.venue || null,
       groom_name: data.groomName || null,
       bride_name: data.brideName || null,
-      design_preference: data.designPreference || null,
+      design_preference: data.designPreference || design?.name || null,
       invitation_message: data.message || null,
       additional_notes: data.additionalNotes || null,
-      amount: data.amount,
+      amount: validatedAmount,
       status: "pending",
       payment_status: "unpaid",
     })

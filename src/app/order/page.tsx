@@ -62,7 +62,6 @@ function OrderForm() {
       const result = await createOrder({
         ...formData,
         designId: designId || undefined,
-        amount,
       });
 
       if (result.error) {

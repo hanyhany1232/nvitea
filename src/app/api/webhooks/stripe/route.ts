@@ -35,7 +35,7 @@ export async function POST(request: Request) {
     const orderId = session.metadata?.order_id;
 
     if (orderId) {
-      await supabaseAdmin
+      const { error: updateError } = await supabaseAdmin
         .from("orders")
         .update({
           payment_status: "paid",
@@ -44,6 +44,14 @@ export async function POST(request: Request) {
           stripe_payment_intent: session.payment_intent as string,
         })
         .eq("id", orderId);
+
+      if (updateError) {
+        console.error("Failed to update order:", updateError);
+        return NextResponse.json(
+          { error: "Database update failed" },
+          { status: 500 }
+        );
+      }
     }
   }
 
