@@ -118,7 +118,11 @@ export default function AdminDesignsPage() {
 
   const handleDelete = async (id: string) => {
     if (!confirm("Delete this design?")) return;
-    await deleteDesign(id);
+    const result = await deleteDesign(id);
+    if (result.error) {
+      setError(result.error);
+      return;
+    }
     loadDesigns();
   };
 

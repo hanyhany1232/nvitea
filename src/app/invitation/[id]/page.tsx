@@ -112,7 +112,7 @@ export default function InvitationPage({
   }
 
   const emoji = eventEmojis[order.event_type] || "✨";
-  const formattedDate = new Date(order.event_date).toLocaleDateString("en-US", {
+  const formattedDate = new Date(order.event_date + "T00:00:00").toLocaleDateString("en-US", {
     weekday: "long",
     year: "numeric",
     month: "long",
