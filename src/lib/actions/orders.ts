@@ -1,6 +1,7 @@
 "use server";
 
 import { createClient } from "@/lib/supabase/server";
+import { createClient as createAdminClient } from "@supabase/supabase-js";
 import { getDesignById } from "@/lib/data";
 
 export interface OrderFormData {
@@ -21,6 +22,10 @@ export interface OrderFormData {
 
 export async function createOrder(data: OrderFormData) {
   const supabase = await createClient();
+  const supabaseAdmin = createAdminClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!
+  );
 
   const {
     data: { user },
@@ -29,7 +34,7 @@ export async function createOrder(data: OrderFormData) {
   const design = data.designId ? getDesignById(data.designId) : null;
   const validatedAmount = design?.price || 99;
 
-  const { data: order, error } = await supabase
+  const { data: order, error } = await supabaseAdmin
     .from("orders")
     .insert({
       user_id: user?.id || null,
@@ -98,6 +103,9 @@ export async function updateOrderStatus(
   const supabase = await createClient();
 
   const updateData: Record<string, string> = { status };
+  if (status === "paid") {
+    updateData.payment_status = "paid";
+  }
   if (invitationUrl) {
     updateData.invitation_url = invitationUrl;
   }

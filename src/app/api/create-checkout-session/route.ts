@@ -17,12 +17,16 @@ export async function POST(request: Request) {
 
     const { data: order, error: orderError } = await supabaseAdmin
       .from("orders")
-      .select("id, amount, customer_email, design_preference")
+      .select("id, amount, customer_email, design_preference, payment_status")
       .eq("id", orderId)
       .single();
 
     if (orderError || !order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
+    }
+
+    if (order.payment_status === "paid") {
+      return NextResponse.json({ error: "Order is already paid" }, { status: 400 });
     }
 
     const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
