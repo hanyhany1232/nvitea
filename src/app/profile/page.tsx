@@ -183,17 +183,18 @@ export default function ProfilePage() {
               {saving ? "Saving..." : "Save Changes"}
             </button>
 
-            <div className="pt-4 border-t border-accent/10">
-              <form action={signOut}>
-                <button
-                  type="submit"
-                  className="w-full py-3 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
-                >
-                  Sign Out
-                </button>
-              </form>
-            </div>
           </motion.form>
+
+          <div className="bg-white rounded-2xl border border-accent/10 shadow-sm p-6 sm:p-8 mt-4">
+            <form action={signOut}>
+              <button
+                type="submit"
+                className="w-full py-3 text-sm text-red-600 hover:text-red-700 hover:bg-red-50 rounded-full transition-colors"
+              >
+                Sign Out
+              </button>
+            </form>
+          </div>
         </div>
       </section>
     </div>

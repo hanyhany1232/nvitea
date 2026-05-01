@@ -14,6 +14,30 @@ export interface DesignFormData {
   active: boolean;
 }
 
+async function requireAdmin() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Not authenticated", supabase };
+  }
+
+  const { data: profile } = await supabase
+    .from("profiles")
+    .select("role")
+    .eq("id", user.id)
+    .single();
+
+  if (profile?.role !== "admin") {
+    return { error: "Not authorized", supabase };
+  }
+
+  return { error: null, supabase };
+}
+
 export async function getDesigns() {
   const supabase = await createClient();
 
@@ -30,7 +54,10 @@ export async function getDesigns() {
 }
 
 export async function createDesign(data: DesignFormData) {
-  const supabase = await createClient();
+  const { error: authError, supabase } = await requireAdmin();
+  if (authError) {
+    return { error: authError };
+  }
 
   const { data: design, error } = await supabase
     .from("designs")
@@ -56,7 +83,10 @@ export async function createDesign(data: DesignFormData) {
 }
 
 export async function updateDesign(id: string, data: Partial<DesignFormData>) {
-  const supabase = await createClient();
+  const { error: authError, supabase } = await requireAdmin();
+  if (authError) {
+    return { error: authError };
+  }
 
   const updateObj: Record<string, unknown> = {};
   if (data.name !== undefined) updateObj.name = data.name;
@@ -82,7 +112,10 @@ export async function updateDesign(id: string, data: Partial<DesignFormData>) {
 }
 
 export async function deleteDesign(id: string) {
-  const supabase = await createClient();
+  const { error: authError, supabase } = await requireAdmin();
+  if (authError) {
+    return { error: authError };
+  }
 
   const { error } = await supabase.from("designs").delete().eq("id", id);
 
