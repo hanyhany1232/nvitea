@@ -14,16 +14,20 @@ import {
   MapPin,
   MessageSquare,
   Palette,
+  CreditCard,
 } from "lucide-react";
+import { createOrder } from "@/lib/actions/orders";
 
 function OrderForm() {
   const searchParams = useSearchParams();
   const designId = searchParams.get("design");
   const selectedDesign = designId ? getDesignById(designId) : null;
 
-  const [formState, setFormState] = useState<"idle" | "submitting" | "success">(
-    "idle"
-  );
+  const [formState, setFormState] = useState<
+    "idle" | "submitting" | "success" | "paying"
+  >("idle");
+  const [orderId, setOrderId] = useState<string | null>(null);
+  const [error, setError] = useState("");
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -39,6 +43,8 @@ function OrderForm() {
     additionalNotes: "",
   });
 
+  const amount = selectedDesign?.price || 99;
+
   const handleChange = (
     e: React.ChangeEvent<
       HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
@@ -50,11 +56,62 @@ function OrderForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormState("submitting");
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    setFormState("success");
+    setError("");
+
+    try {
+      const result = await createOrder({
+        ...formData,
+        designId: designId || undefined,
+        amount,
+      });
+
+      if (result.error) {
+        setError(result.error);
+        setFormState("idle");
+        return;
+      }
+
+      if (result.order) {
+        setOrderId(result.order.id);
+        setFormState("success");
+      }
+    } catch {
+      setError("Something went wrong. Please try again.");
+      setFormState("idle");
+    }
   };
 
-  if (formState === "success") {
+  const handlePayment = async () => {
+    if (!orderId) return;
+    setFormState("paying");
+
+    try {
+      const res = await fetch("/api/create-checkout-session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          orderId,
+          amount,
+          designName: selectedDesign?.name || formData.designPreference,
+          customerEmail: formData.email,
+        }),
+      });
+
+      const data = await res.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        setError(data.error || "Payment setup failed");
+        setFormState("success");
+      }
+    } catch {
+      setError("Could not connect to payment. Please try again later.");
+      setFormState("success");
+    }
+  };
+
+  if (formState === "success" || formState === "paying") {
     return (
       <div className="pt-20 sm:pt-24">
         <section className="min-h-[70vh] flex items-center justify-center bg-cream py-20">
@@ -69,17 +126,36 @@ function OrderForm() {
             <h2 className="font-heading text-3xl font-bold text-primary mb-4">
               Order Submitted!
             </h2>
-            <p className="text-text-muted text-lg">
-              Thank you for your order! We&apos;ll review your details and get
-              back to you within 24 hours via WhatsApp or email with a preview
-              of your invitation.
+            <p className="text-text-muted text-lg mb-8">
+              Thank you for your order! You can pay now with Stripe or pay later
+              — we&apos;ll contact you via WhatsApp within 24 hours.
             </p>
-            <Link
-              href="/"
-              className="inline-block mt-8 px-8 py-3 bg-accent text-white rounded-full hover:bg-accent-dark transition-colors"
-            >
-              Back to Home
-            </Link>
+
+            {error && (
+              <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+                {error}
+              </div>
+            )}
+
+            <div className="space-y-4">
+              <button
+                onClick={handlePayment}
+                disabled={formState === "paying"}
+                className="w-full flex items-center justify-center gap-2 px-8 py-4 bg-accent text-white rounded-full hover:bg-accent-dark transition-colors disabled:opacity-60 text-lg font-medium shadow-lg shadow-accent/20"
+              >
+                <CreditCard size={20} />
+                {formState === "paying"
+                  ? "Redirecting to Stripe..."
+                  : `Pay Now — SAR ${amount}`}
+              </button>
+
+              <Link
+                href="/"
+                className="inline-block w-full px-8 py-3 bg-white text-primary border border-accent/20 rounded-full hover:bg-accent/5 transition-colors"
+              >
+                Pay Later — Back to Home
+              </Link>
+            </div>
           </motion.div>
         </section>
       </div>
@@ -108,11 +184,27 @@ function OrderForm() {
             Fill in your event details and we&apos;ll create a stunning digital
             invitation for you.
           </motion.p>
+          {selectedDesign && (
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ delay: 0.2 }}
+              className="mt-4 inline-block px-4 py-2 rounded-full bg-accent/20 text-accent text-sm font-medium"
+            >
+              SAR {amount}
+            </motion.div>
+          )}
         </div>
       </section>
 
       <section className="py-12 sm:py-16 bg-cream">
         <div className="max-w-2xl mx-auto px-4 sm:px-6 lg:px-8">
+          {error && (
+            <div className="mb-6 p-4 rounded-xl bg-red-50 border border-red-200 text-red-700 text-sm">
+              {error}
+            </div>
+          )}
+
           <motion.form
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -200,7 +292,10 @@ function OrderForm() {
               </div>
             </FormSection>
 
-            <FormSection title="Names (for Wedding/Engagement)" icon={MessageSquare}>
+            <FormSection
+              title="Names (for Wedding/Engagement)"
+              icon={MessageSquare}
+            >
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <FormField
                   label="Groom's Name"
@@ -255,6 +350,15 @@ function OrderForm() {
               </div>
             </FormSection>
 
+            <div className="bg-white rounded-2xl p-6 border border-accent/5 shadow-sm">
+              <div className="flex justify-between items-center">
+                <span className="text-primary font-medium">Order Total</span>
+                <span className="text-2xl font-heading font-bold text-accent">
+                  SAR {amount}
+                </span>
+              </div>
+            </div>
+
             <button
               type="submit"
               disabled={formState === "submitting"}
@@ -274,8 +378,8 @@ function OrderForm() {
             </button>
 
             <p className="text-center text-sm text-text-muted">
-              After submitting, we&apos;ll contact you via WhatsApp within 24
-              hours with a preview and payment details.
+              After submitting, you can pay with Stripe or contact us via
+              WhatsApp for manual payment.
             </p>
           </motion.form>
         </div>

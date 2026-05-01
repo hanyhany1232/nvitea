@@ -1,10 +1,12 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Menu, X } from "lucide-react";
+import { Menu, X, LogIn, User } from "lucide-react";
 import clsx from "clsx";
+import { createClient } from "@/lib/supabase/client";
+import type { User as SupabaseUser } from "@supabase/supabase-js";
 
 const navLinks = [
   { href: "/", label: "Home" },
@@ -16,6 +18,22 @@ const navLinks = [
 
 export function Header() {
   const [mobileOpen, setMobileOpen] = useState(false);
+  const [user, setUser] = useState<SupabaseUser | null>(null);
+
+  useEffect(() => {
+    const supabase = createClient();
+    supabase.auth.getUser().then(({ data }) => {
+      setUser(data.user);
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+    });
+
+    return () => subscription.unsubscribe();
+  }, []);
 
   return (
     <header className="fixed top-0 left-0 right-0 z-50 bg-cream/80 backdrop-blur-md border-b border-accent/10">
@@ -44,7 +62,24 @@ export function Header() {
             ))}
           </nav>
 
-          <div className="hidden md:flex items-center gap-4">
+          <div className="hidden md:flex items-center gap-3">
+            {user ? (
+              <Link
+                href="/admin"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-primary/70 hover:text-accent transition-colors"
+              >
+                <User size={16} />
+                Dashboard
+              </Link>
+            ) : (
+              <Link
+                href="/auth/login"
+                className="flex items-center gap-2 px-4 py-2 text-sm text-primary/70 hover:text-accent transition-colors"
+              >
+                <LogIn size={16} />
+                Sign In
+              </Link>
+            )}
             <Link
               href="/order"
               className="px-6 py-2.5 bg-accent text-white text-sm font-medium rounded-full hover:bg-accent-dark transition-colors duration-200"
@@ -80,6 +115,23 @@ export function Header() {
               {link.label}
             </Link>
           ))}
+          {user ? (
+            <Link
+              href="/admin"
+              onClick={() => setMobileOpen(false)}
+              className="block py-2 text-primary/70 hover:text-accent transition-colors"
+            >
+              Dashboard
+            </Link>
+          ) : (
+            <Link
+              href="/auth/login"
+              onClick={() => setMobileOpen(false)}
+              className="block py-2 text-primary/70 hover:text-accent transition-colors"
+            >
+              Sign In
+            </Link>
+          )}
           <Link
             href="/order"
             onClick={() => setMobileOpen(false)}
