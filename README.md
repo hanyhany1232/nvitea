@@ -75,19 +75,18 @@ the buttons are placeholders. To turn them on:
    - **CoverCraft Pro** — recurring, $9/month
    - **CoverCraft Lifetime** — one-time, $49
    Copy each *Price ID* (looks like `price_...`).
-3. Install Stripe in this project:
-   ```bash
-   npm install stripe @stripe/stripe-js
-   ```
+3. Stripe is already installed; the checkout API route lives at
+   `src/app/api/checkout/route.ts` and the **Go Pro** / **Get lifetime**
+   buttons in the Pricing section already POST to it.
 4. Add to `.env.local` (and Vercel env vars):
    ```
    STRIPE_SECRET_KEY=sk_live_...
    STRIPE_PRO_PRICE_ID=price_...
    STRIPE_LIFETIME_PRICE_ID=price_...
+   NEXT_PUBLIC_SITE_URL=https://your-domain.com
    ```
-5. Create an API route `src/app/api/checkout/route.ts` that calls
-   `stripe.checkout.sessions.create(...)` and redirects to the Stripe
-   checkout. Wire it to the **Go Pro** / **Get lifetime** buttons.
+5. Redeploy. The buttons will now redirect users to a real Stripe checkout
+   session (subscription for Pro, one-time payment for Lifetime).
 
 Total time to a live, charging site: under one afternoon.
 
