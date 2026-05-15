@@ -1,34 +1,16 @@
 import type { Metadata } from "next";
-import { Playfair_Display, Inter } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
-import { Header } from "@/components/layout/Header";
-import { Footer } from "@/components/layout/Footer";
-import { WhatsAppButton } from "@/components/ui/WhatsAppButton";
-
-const playfair = Playfair_Display({
-  variable: "--font-playfair",
-  subsets: ["latin"],
-  display: "swap",
-});
 
 const inter = Inter({
-  variable: "--font-inter",
   subsets: ["latin"],
-  display: "swap",
+  variable: "--font-inter",
 });
 
 export const metadata: Metadata = {
-  title: "Invitea | Elegant Digital Invitations",
+  title: "CoverCraft AI — Tailored cover letters in 20 seconds",
   description:
-    "Create stunning digital invitations for weddings, engagements, birthdays, graduations, and more. Share beautifully designed invitations via WhatsApp.",
-  keywords: [
-    "digital invitations",
-    "wedding invitations",
-    "online invitations",
-    "WhatsApp invitations",
-    "RSVP",
-    "event invitations",
-  ],
+    "Generate a tailored, ATS-friendly cover letter from any job description in under 20 seconds. Powered by DeepSeek.",
 };
 
 export default function RootLayout({
@@ -37,15 +19,9 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html
-      lang="en"
-      className={`${playfair.variable} ${inter.variable} h-full antialiased`}
-    >
-      <body className="min-h-full flex flex-col">
-        <Header />
-        <main className="flex-1">{children}</main>
-        <Footer />
-        <WhatsAppButton />
+    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+      <body className="min-h-full flex flex-col bg-gradient-to-b from-violet-50 to-violet-100/40">
+        {children}
       </body>
     </html>
   );
