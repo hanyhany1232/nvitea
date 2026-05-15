@@ -389,8 +389,20 @@ function Generator() {
   );
 }
 
+type Tier = {
+  name: string;
+  price: string;
+  sub?: string;
+  desc: string;
+  features: string[];
+  cta: string;
+  featured: boolean;
+  plan?: "pro" | "lifetime";
+  href?: string;
+};
+
 function Pricing() {
-  const tiers = [
+  const tiers: Tier[] = [
     {
       name: "Free",
       price: "$0",
@@ -416,7 +428,7 @@ function Pricing() {
         "Priority generation",
       ],
       cta: "Go Pro",
-      href: "#",
+      plan: "pro",
       featured: true,
     },
     {
@@ -430,10 +442,43 @@ function Pricing() {
         "New features as we ship them",
       ],
       cta: "Get lifetime",
-      href: "#",
+      plan: "lifetime",
       featured: false,
     },
   ];
+
+  const [pending, setPending] = useState<"pro" | "lifetime" | null>(null);
+  const [checkoutError, setCheckoutError] = useState("");
+
+  async function startCheckout(plan: "pro" | "lifetime") {
+    setCheckoutError("");
+    setPending(plan);
+    try {
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ plan }),
+      });
+      const data = (await res.json().catch(() => ({}))) as {
+        url?: string;
+        detail?: string;
+      };
+      if (!res.ok || !data.url) {
+        setCheckoutError(
+          data.detail ?? "Checkout is not configured yet. See README.",
+        );
+        return;
+      }
+      window.location.assign(data.url);
+    } catch (e) {
+      setCheckoutError(
+        e instanceof Error ? e.message : "Could not reach checkout.",
+      );
+    } finally {
+      setPending(null);
+    }
+  }
+
   return (
     <section id="pricing" className="max-w-6xl mx-auto px-6 py-16">
       <h2 className="text-3xl font-bold text-slate-900 text-center">
@@ -471,17 +516,35 @@ function Pricing() {
                 </li>
               ))}
             </ul>
-            <a
-              href={t.href}
-              className={`mt-6 block text-center ${
-                t.featured ? "btn-primary" : "btn-secondary"
-              }`}
-            >
-              {t.cta}
-            </a>
+            {t.plan ? (
+              <button
+                type="button"
+                disabled={pending === t.plan}
+                onClick={() => t.plan && startCheckout(t.plan)}
+                className={`mt-6 block w-full text-center ${
+                  t.featured ? "btn-primary" : "btn-secondary"
+                }`}
+              >
+                {pending === t.plan ? "Redirecting…" : t.cta}
+              </button>
+            ) : (
+              <a
+                href={t.href ?? "#"}
+                className={`mt-6 block text-center ${
+                  t.featured ? "btn-primary" : "btn-secondary"
+                }`}
+              >
+                {t.cta}
+              </a>
+            )}
           </div>
         ))}
       </div>
+      {checkoutError && (
+        <p className="mt-6 text-center text-sm text-rose-600">
+          {checkoutError}
+        </p>
+      )}
     </section>
   );
 }
